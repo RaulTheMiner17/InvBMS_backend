@@ -11,9 +11,9 @@ const PORT = process.env.PORT || 3005;
 puppeteer.use(StealthPlugin());
 puppeteer.use(AdblockerPlugin({ blockTrackers: true }));
 
-// Enable CORS (Allow requests only from your frontend)
+// ✅ CORS FIX: Allow requests from frontend
 const allowedOrigins = [
-  "https://invbms-production.up.railway.app",
+  "https://invbms-production.up.railway.app", // Frontend URL
   "http://localhost:3000", // Optional: Allow localhost for testing
 ];
 
@@ -30,6 +30,7 @@ app.use(cors({
 
 app.use(express.json());
 
+// ✅ Scraping Route
 app.get("/api/scrape", async (req, res) => {
   try {
     const { url } = req.query;
@@ -116,5 +117,5 @@ app.get("/api/scrape", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
