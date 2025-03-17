@@ -11,7 +11,23 @@ const PORT = process.env.PORT || 3005;
 puppeteer.use(StealthPlugin());
 puppeteer.use(AdblockerPlugin({ blockTrackers: true }));
 
-app.use(cors());
+// Enable CORS (Allow requests only from your frontend)
+const allowedOrigins = [
+  "https://invbms-production.up.railway.app",
+  "http://localhost:3000", // Optional: Allow localhost for testing
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
+}));
+
 app.use(express.json());
 
 app.get("/api/scrape", async (req, res) => {
@@ -25,7 +41,7 @@ app.get("/api/scrape", async (req, res) => {
     console.log(`[INFO] Scraping URL: ${url}`);
 
     const browser = await puppeteer.launch({
-      headless: true,
+      headless: "new", // Better performance in modern Puppeteer
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
@@ -45,7 +61,7 @@ app.get("/api/scrape", async (req, res) => {
 
     console.log("[INFO] Extracting JSON-LD data...");
     
-    // Extract ALL JSON-LD scripts
+    // Extract JSON-LD scripts
     const jsonLdDataArray = await page.evaluate(() => {
       return Array.from(document.querySelectorAll('script[type="application/ld+json"]'))
         .map(script => script.textContent)
@@ -60,8 +76,7 @@ app.get("/api/scrape", async (req, res) => {
     });
 
     console.log(`[INFO] Found ${jsonLdDataArray.length} JSON-LD scripts.`);
-    console.log("[DEBUG] Full JSON-LD Data:", JSON.stringify(jsonLdDataArray, null, 2));
-
+    
     await browser.close();
 
     if (!jsonLdDataArray.length) {
@@ -69,21 +84,17 @@ app.get("/api/scrape", async (req, res) => {
       return res.status(404).json({ error: "No JSON-LD data found" });
     }
 
-    // Flatten nested arrays inside JSON-LD data
+    // Flatten and find event data
     const flattenedJsonLd = jsonLdDataArray.flat();
-
-    // Find the event data that contains offers
     const eventData = flattenedJsonLd.find(item => item["@type"] === "Event" && item.offers);
-    
+
     if (!eventData || !eventData.offers) {
-      console.warn("[WARN] No offers found in JSON-LD data.");
+      console.warn("[WARN] No offers found.");
       return res.status(404).json({ error: "No offers found in JSON-LD data" });
     }
 
     console.log(`[INFO] Extracted ${eventData.offers.length} offers.`);
-    console.log("[DEBUG] Offers Data:", JSON.stringify(eventData.offers, null, 2));
 
-    // Extract only relevant offers
     const offers = eventData.offers.map(offer => ({
       name: offer.name,
       price: offer.price,
