@@ -1,5 +1,4 @@
 import express from "express";
-import cors from "cors";
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import AdblockerPlugin from "puppeteer-extra-plugin-adblocker";
@@ -11,24 +10,22 @@ const PORT = process.env.PORT || 3005;
 puppeteer.use(StealthPlugin());
 puppeteer.use(AdblockerPlugin({ blockTrackers: true }));
 
-// ✅ CORS FIX: Allow requests from frontend
-const allowedOrigins = [
-  "https://invbms-production.up.railway.app", // Frontend URL
-  "http://localhost:3000", // Optional: Allow localhost for testing
-];
-
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true
-}));
-
 app.use(express.json());
+
+// ✅ Manually Set CORS Headers
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://invbms-production.up.railway.app"); // Allow Frontend URL
+  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.header("Access-Control-Allow-Credentials", "true");
+  
+  // ✅ Handle Preflight Requests
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+  
+  next();
+});
 
 // ✅ Scraping Route
 app.get("/api/scrape", async (req, res) => {
@@ -42,7 +39,7 @@ app.get("/api/scrape", async (req, res) => {
     console.log(`[INFO] Scraping URL: ${url}`);
 
     const browser = await puppeteer.launch({
-      headless: "new", // Better performance in modern Puppeteer
+      headless: "new", // Improved headless mode
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
