@@ -1,8 +1,9 @@
 import express from "express";
 import cors from "cors";
-import puppeteer from "puppeteer-core";
+import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import AdblockerPlugin from "puppeteer-extra-plugin-adblocker";
+import puppeteerCore from "puppeteer-core";
 import { executablePath } from "puppeteer";
 
 const app = express();
@@ -25,9 +26,10 @@ app.get("/api/scrape", async (req, res) => {
 
     console.log(`[INFO] Scraping URL: ${url}`);
 
-    const browser = await puppeteer.launch({
+    // Launch Puppeteer with appropriate settings for Render
+    const browser = await puppeteerCore.launch({
       headless: "new",
-      executablePath: executablePath(), // Use Chromium from Render
+      executablePath: executablePath(),
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
