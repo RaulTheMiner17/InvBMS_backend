@@ -3,8 +3,8 @@ import cors from "cors";
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import AdblockerPlugin from "puppeteer-extra-plugin-adblocker";
+import puppeteerCore from "puppeteer-core";
 
-import { executablePath } from 'puppeteer';
 const app = express();
 const PORT = process.env.PORT || 3005;
 
@@ -25,17 +25,17 @@ app.get("/api/scrape", async (req, res) => {
 
     console.log(`[INFO] Scraping URL: ${url}`);
 
-    const browser = await puppeteer.launch({
-      headless: true,
+    const browser = await puppeteerCore.launch({
+      headless: "new",
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/google-chrome-stable", // Render-compatible path
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--disable-gpu",
+        "--disable-software-rasterizer",
         "--window-size=1280x1024",
       ],
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || 
-        "/usr/bin/chromium-browser" // Render-compatible path
     });
 
     const page = await browser.newPage();
@@ -61,9 +61,6 @@ app.get("/api/scrape", async (req, res) => {
         })
         .filter(data => data);
     });
-
-    console.log(`[INFO] Found ${jsonLdDataArray.length} JSON-LD scripts.`);
-    console.log("[DEBUG] Full JSON-LD Data:", JSON.stringify(jsonLdDataArray, null, 2));
 
     await browser.close();
 
