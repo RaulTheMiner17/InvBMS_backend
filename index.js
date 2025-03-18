@@ -4,6 +4,7 @@ import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import AdblockerPlugin from "puppeteer-extra-plugin-adblocker";
 
+import { executablePath } from 'puppeteer';
 const app = express();
 const PORT = process.env.PORT || 3005;
 
@@ -33,6 +34,7 @@ app.get("/api/scrape", async (req, res) => {
         "--disable-gpu",
         "--window-size=1280x1024",
       ],
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || executablePath()
     });
 
     const page = await browser.newPage();
