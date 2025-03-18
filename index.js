@@ -2,33 +2,14 @@ import express from "express";
 import cors from "cors";
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
-
-
-// Add explicit imports for StealthPlugin evasions
-require('puppeteer-extra-plugin-stealth/evasions/chrome.app');
-require('puppeteer-extra-plugin-stealth/evasions/chrome.csi');
-require('puppeteer-extra-plugin-stealth/evasions/chrome.loadTimes');
-require('puppeteer-extra-plugin-stealth/evasions/chrome.runtime');
-require('puppeteer-extra-plugin-stealth/evasions/defaultArgs');
-require('puppeteer-extra-plugin-stealth/evasions/iframe.contentWindow');
-require('puppeteer-extra-plugin-stealth/evasions/media.codecs');
-require('puppeteer-extra-plugin-stealth/evasions/navigator.hardwareConcurrency');
-require('puppeteer-extra-plugin-stealth/evasions/navigator.languages');
-require('puppeteer-extra-plugin-stealth/evasions/navigator.permissions');
-require('puppeteer-extra-plugin-stealth/evasions/navigator.plugins');
-require('puppeteer-extra-plugin-stealth/evasions/navigator.vendor');
-require('puppeteer-extra-plugin-stealth/evasions/navigator.webdriver');
-require('puppeteer-extra-plugin-stealth/evasions/sourceurl');
-require('puppeteer-extra-plugin-stealth/evasions/user-agent-override');
-require('puppeteer-extra-plugin-stealth/evasions/webgl.vendor');
-require('puppeteer-extra-plugin-stealth/evasions/window.outerdimensions');
+import AdblockerPlugin from "puppeteer-extra-plugin-adblocker";
 
 const app = express();
 const PORT = process.env.PORT || 3005;
 
 // Apply Puppeteer plugins
 puppeteer.use(StealthPlugin());
-
+puppeteer.use(AdblockerPlugin({ blockTrackers: true }));
 
 app.use(cors());
 app.use(express.json());
