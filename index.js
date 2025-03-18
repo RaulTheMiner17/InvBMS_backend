@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import AdblockerPlugin from "puppeteer-extra-plugin-adblocker";
@@ -10,24 +11,9 @@ const PORT = process.env.PORT || 3005;
 puppeteer.use(StealthPlugin());
 puppeteer.use(AdblockerPlugin({ blockTrackers: true }));
 
+app.use(cors());
 app.use(express.json());
 
-// ✅ Manually Set CORS Headers
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://invbms-production.up.railway.app"); // Allow Frontend URL
-  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  res.header("Access-Control-Allow-Credentials", "true");
-  
-  // ✅ Handle Preflight Requests
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204);
-  }
-  
-  next();
-});
-
-// ✅ Scraping Route
 app.get("/api/scrape", async (req, res) => {
   try {
     const { url } = req.query;
@@ -39,7 +25,7 @@ app.get("/api/scrape", async (req, res) => {
     console.log(`[INFO] Scraping URL: ${url}`);
 
     const browser = await puppeteer.launch({
-      headless: "new", // Improved headless mode
+      headless: true,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
@@ -59,7 +45,7 @@ app.get("/api/scrape", async (req, res) => {
 
     console.log("[INFO] Extracting JSON-LD data...");
     
-    // Extract JSON-LD scripts
+    // Extract ALL JSON-LD scripts
     const jsonLdDataArray = await page.evaluate(() => {
       return Array.from(document.querySelectorAll('script[type="application/ld+json"]'))
         .map(script => script.textContent)
@@ -74,7 +60,8 @@ app.get("/api/scrape", async (req, res) => {
     });
 
     console.log(`[INFO] Found ${jsonLdDataArray.length} JSON-LD scripts.`);
-    
+    console.log("[DEBUG] Full JSON-LD Data:", JSON.stringify(jsonLdDataArray, null, 2));
+
     await browser.close();
 
     if (!jsonLdDataArray.length) {
@@ -82,17 +69,21 @@ app.get("/api/scrape", async (req, res) => {
       return res.status(404).json({ error: "No JSON-LD data found" });
     }
 
-    // Flatten and find event data
+    // Flatten nested arrays inside JSON-LD data
     const flattenedJsonLd = jsonLdDataArray.flat();
-    const eventData = flattenedJsonLd.find(item => item["@type"] === "Event" && item.offers);
 
+    // Find the event data that contains offers
+    const eventData = flattenedJsonLd.find(item => item["@type"] === "Event" && item.offers);
+    
     if (!eventData || !eventData.offers) {
-      console.warn("[WARN] No offers found.");
+      console.warn("[WARN] No offers found in JSON-LD data.");
       return res.status(404).json({ error: "No offers found in JSON-LD data" });
     }
 
     console.log(`[INFO] Extracted ${eventData.offers.length} offers.`);
+    console.log("[DEBUG] Offers Data:", JSON.stringify(eventData.offers, null, 2));
 
+    // Extract only relevant offers
     const offers = eventData.offers.map(offer => ({
       name: offer.name,
       price: offer.price,
@@ -114,5 +105,5 @@ app.get("/api/scrape", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
