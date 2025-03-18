@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import { addExtra } from "puppeteer-extra";
-import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import AdblockerPlugin from "puppeteer-extra-plugin-adblocker";
 import puppeteerCore from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
@@ -9,9 +8,8 @@ import chromium from "@sparticuz/chromium";
 const app = express();
 const PORT = process.env.PORT || 3005;
 
-// Setup Puppeteer with plugins
+// Setup Puppeteer with plugins (without Stealth)
 const puppeteer = addExtra(puppeteerCore);
-puppeteer.use(StealthPlugin());
 puppeteer.use(AdblockerPlugin({ blockTrackers: true }));
 
 app.use(cors());
