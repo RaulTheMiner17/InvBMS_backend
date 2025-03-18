@@ -1,15 +1,14 @@
 import express from "express";
 import cors from "cors";
-import { addExtra } from "puppeteer-extra";
+import puppeteer from "puppeteer-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import AdblockerPlugin from "puppeteer-extra-plugin-adblocker";
-import puppeteerCore from "puppeteer-core";
-import chromium from "@sparticuz/chromium";
 
 const app = express();
 const PORT = process.env.PORT || 3005;
 
-// Setup Puppeteer with plugins (without Stealth)
-const puppeteer = addExtra(puppeteerCore);
+// Apply Puppeteer plugins
+puppeteer.use(StealthPlugin());
 puppeteer.use(AdblockerPlugin({ blockTrackers: true }));
 
 app.use(cors());
@@ -25,12 +24,15 @@ app.get("/api/scrape", async (req, res) => {
 
     console.log(`[INFO] Scraping URL: ${url}`);
 
-    // Launch Puppeteer with serverless-compatible Chromium
     const browser = await puppeteer.launch({
-      headless: chromium.headless,
-      executablePath: await chromium.executablePath(),
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--window-size=1280x1024",
+      ],
     });
 
     const page = await browser.newPage();
