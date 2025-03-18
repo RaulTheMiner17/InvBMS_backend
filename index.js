@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import AdblockerPlugin from "puppeteer-extra-plugin-adblocker";
+
 
 // Add explicit imports for StealthPlugin evasions
 require('puppeteer-extra-plugin-stealth/evasions/chrome.app');
@@ -28,7 +28,7 @@ const PORT = process.env.PORT || 3005;
 
 // Apply Puppeteer plugins
 puppeteer.use(StealthPlugin());
-puppeteer.use(AdblockerPlugin({ blockTrackers: true }));
+
 
 app.use(cors());
 app.use(express.json());
