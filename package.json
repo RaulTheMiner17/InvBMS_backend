@@ -13,6 +13,6 @@
         "puppeteer-extra-plugin-stealth": "^2.11.2"
     },
     "pkg": {
-        "assets": "node_modules/puppeteer-extra-plugin-stealth/**/*.*"
-    }
+    "assets": "node_modules/**/*.*"
+  }
 }
