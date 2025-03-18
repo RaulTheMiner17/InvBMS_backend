@@ -34,7 +34,8 @@ app.get("/api/scrape", async (req, res) => {
         "--disable-gpu",
         "--window-size=1280x1024",
       ],
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || executablePath()
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || 
+        "/usr/bin/chromium-browser" // Render-compatible path
     });
 
     const page = await browser.newPage();
